@@ -1,0 +1,3 @@
+---
+bool detect_success
+geometry_msgs/Pose objet_pose
