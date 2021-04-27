@@ -1,0 +1,11 @@
+Table 1:
+- Translation: [3.903, 0.412, 0.000]
+- Rotation: in Quaternion [0.000, 0.000, -0.006, 1.000]
+            in RPY (radian) [0.000, -0.000, -0.012]
+            in RPY (degree) [0.000, -0.000, -0.689]
+Table 2:
+- Translation: [0.542, 2.572, 0.000]
+- Rotation: in Quaternion [0.000, 0.000, 0.696, 0.718]
+            in RPY (radian) [0.000, -0.000, 1.539]
+            in RPY (degree) [0.000, -0.000, 88.176]
+
