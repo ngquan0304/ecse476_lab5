@@ -39,7 +39,7 @@ catkin_simple()
 # cs_add_executable(find_table_frame src/find_table_frame.cpp)
 # cs_add_executable(find_points_above_table src/find_points_above_table.cpp)
 # cs_add_executable(find_block src/find_block.cpp)
-cs_add_executable(detect_object src/detect_object.cpp)
+cs_add_executable(detect_object_service src/detect_object_service.cpp)
 
 
 # the following is required, if desire to link a node in this package with a library created in this same package

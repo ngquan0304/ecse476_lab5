@@ -48,7 +48,6 @@ void kinectCB(const sensor_msgs::PointCloud2ConstPtr& cloud) {
         // change header frame to the one we use
         pclKinect_clr_ptr->header.frame_id = "camera_depth_optical_frame";
         ROS_INFO("image has  %d * %d points", pclKinect_clr_ptr->width, pclKinect_clr_ptr->height);
-        ROS_INFO("view frame camera_depth_optical_frame on topics pcd, table_frame_pts and pts_above_table");
         got_kinect_image = true;
     }
 }
@@ -172,7 +171,6 @@ bool detectObjectCallBack(detect_object::DetectObjectServiceMsgRequest &request,
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud_wrt_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_above_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_above_right_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointXYZRGB block_centroid;
 
     pcl::toROSMsg(*pclKinect_clr_ptr, ros_cloud_orig); //convert from PCL cloud to ROS message this way
     ros_cloud_orig.header.frame_id = "camera_depth_optical_frame";
@@ -222,11 +220,13 @@ bool detectObjectCallBack(detect_object::DetectObjectServiceMsgRequest &request,
 
     if (isnan(block_x) || isnan(block_y) || npts_block_size == 0)
     {
+        ROS_INFO("Could not found any block on the table");
         response.detect_success = false;
         found_block = false;
     }
     else
     {
+        ROS_INFO("Found a block on the table");
         block_transform.setOrigin(tf::Vector3(block_x, block_y, block_z));
         block_transform.setRotation(tf::Quaternion(0, 0, 0, 1));
         response.detect_success = true;
@@ -240,20 +240,23 @@ bool detectObjectCallBack(detect_object::DetectObjectServiceMsgRequest &request,
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "detect_object"); //node name
+    ros::init(argc, argv, "detect_object_service"); //node name
     ros::NodeHandle nh;
     nh_ptr = &nh;
 
     // create a service server that return the location of an object (if there exists one)
     ros::ServiceServer detect_object_service = nh.advertiseService("detect_object_service", detectObjectCallBack);
+    //ros::Publisher filtered_pcd = nh.advertise<sensor_msgs::PointCloud2>("filtered_pcd",1);
 
-    // check the call back
+    ROS_INFO("detect_object_service is ON");
+    ROS_INFO("preparing to check for block location on table");
+        // check the call back
     
     tf::TransformBroadcaster br;
     //ros_cloud_wrt_table.header.frame_id = "table_frame";
     while (ros::ok())
     {
-        while (found_block == true)
+        if (found_block == true)
         {
             br.sendTransform(tf::StampedTransform(block_transform, ros::Time::now(), "table_frame", "block_frame"));
         }
