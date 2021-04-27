@@ -7,8 +7,8 @@
 #include <geometry_msgs/Quaternion.h>
 #include <mobot_controller/ServiceMsg.h>
 #include <mobot_controller/LocomotionAction.h>
-#include <mobot_controller/locomotionFeedback.h>
-#include <mobot_controller/locomotionResult.h>
+#include <mobot_controller/LocomotionFeedback.h>
+#include <mobot_controller/LocomotionResult.h>
 #include <traj_builder/traj_builder.h>
 #include <actionlib/server/simple_action_server.h>
 #include <ros/ros.h>
