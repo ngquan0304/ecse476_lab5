@@ -5,12 +5,12 @@
 // return a coordinate of the object pose (for now can only detect 1 single object)
 
 #include <ros/ros.h>
+#include <iostream>
 #include <stdlib.h>
 #include <math.h>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_ros/point_cloud.h> //to convert between PCL and ROS
-//#include <pcl/ros/conversions.h>
 #include <pcl/conversions.h>
 
 #include <pcl/point_types.h>
@@ -31,10 +31,27 @@
 #include "detect_object/DetectObjectServiceMsg.h"
 
 
-int g_ans;
-
 using namespace std;
-PclUtils *g_pcl_utils_ptr;
+ros::NodeHandle* nh_ptr;
+bool got_kinect_image = false; //snapshot indicator
+bool found_block = false;
+
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclKinect_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>); //pointer for color version of pointcloud
+sensor_msgs::PointCloud2 ros_cloud_wrt_table, ros_pts_above_table, ros_cloud_orig, ros_pts_above_right_table;   // for debugging
+
+tf::Transform block_transform;    // transformation of the block wrt the torso
+
+void kinectCB(const sensor_msgs::PointCloud2ConstPtr& cloud) {
+    if (!got_kinect_image) { // once only, to keep the data stable
+        ROS_INFO("got new selected kinect image");
+        pcl::fromROSMsg(*cloud, *pclKinect_clr_ptr);
+        // change header frame to the one we use
+        pclKinect_clr_ptr->header.frame_id = "camera_depth_optical_frame";
+        ROS_INFO("image has  %d * %d points", pclKinect_clr_ptr->width, pclKinect_clr_ptr->height);
+        ROS_INFO("view frame camera_depth_optical_frame on topics pcd, table_frame_pts and pts_above_table");
+        got_kinect_image = true;
+    }
+}
 
 void find_indices_of_plane_from_patch(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_ptr, vector<int> &indices)
 {
@@ -81,51 +98,81 @@ Eigen::Affine3f get_table_frame_wrt_camera()
     xformUtils.printStampedTf(table_frame_wrt_cam_stf);
 
     tf::Transform table_frame_wrt_cam_tf = xformUtils.get_tf_from_stamped_tf(table_frame_wrt_cam_stf);
-
     affine_table_wrt_camera = xformUtils.transformTFToAffine3f(table_frame_wrt_cam_tf);
-
     //ROS_INFO("affine: ");
     //xformUtils.printAffine(affine_table_wrt_camera);
     return affine_table_wrt_camera;
 }
 
-int main(int argc, char **argv)
+Eigen::Affine3f get_block_frame_wrt_torso()
 {
-    ros::init(argc, argv, "detect_object"); //node name
-    ros::NodeHandle nh;
-    ROS_INFO("instantiating a pclUtils object");
-    PclUtils pclUtils(&nh);
+    bool tferr = true;
+    int ntries = 0;
+    XformUtils xformUtils;
+    tf::TransformListener tfListener;
+    tf::StampedTransform block_frame_wrt_torso_stf;
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclKinect_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>); //pointer for color version of pointcloud
+    Eigen::Affine3f affine_block_frame_wrt_torso;
+    while (tferr)
+    {
+        tferr = false;
+        try
+        {
+            tfListener.lookupTransform("torso", "block_frame", ros::Time(0), block_frame_wrt_torso_stf);
+        }
+        catch (tf::TransformException &exception)
+        {
+            ROS_WARN("%s; retrying...", exception.what());
+            tferr = true;
+            ros::Duration(0.5).sleep(); // sleep for half a second
+            ros::spinOnce();
+            ntries++;
+            if (ntries > 5)
+            {
+                ROS_WARN("cannot find block_frame_wrt_torso");
+                ros::Duration(1.0).sleep();
+            }
+        }
+    }
+    ROS_INFO("tf is good for table w/rt camera");
+    xformUtils.printStampedTf(block_frame_wrt_torso_stf);
+
+    tf::Transform block_frame_wrt_torso_tf = xformUtils.get_tf_from_stamped_tf(block_frame_wrt_torso_stf);
+    affine_block_frame_wrt_torso = xformUtils.transformTFToAffine3f(block_frame_wrt_torso_tf);
+    //ROS_INFO("affine: ");
+    //xformUtils.printAffine(affine_block_frame_wrt_torso);
+    return affine_block_frame_wrt_torso;
+}
+
+// This function is to update the current variable block_transform.
+bool detectObjectCallBack(detect_object::DetectObjectServiceMsgRequest &request, detect_object::DetectObjectServiceMsgResponse &response)
+{
+    ros::NodeHandle& nh_ref = *nh_ptr;
+    // subscribe to the pointcloud2 topic
+    ros::Subscriber pointcloud_subscriber = nh_ref.subscribe("/pcd", 1, kinectCB);
+
+    // reset the flag to check for kinect image
+    got_kinect_image = false;
+
+    // callback will run and check if there is data
+    // spin until obtain a snapshot
+    ROS_INFO("waiting for kinect data");
+    while (!got_kinect_image) {
+        ROS_INFO("waiting...");
+        ros::spinOnce();
+        ros::Duration(0.5).sleep();
+    }
+
+    // if out of this loop -> obtained a cloud and store in pclKinect_clr_ptr
+    ROS_INFO("receive data from kinect");
+
+    ROS_INFO("instantiating a pclUtils object");
+    PclUtils pclUtils(nh_ptr);
+    
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud_wrt_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_above_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_above_right_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointXYZRGB block_centroid;
-
-    tf::TransformBroadcaster br;
-    tf::Transform transform;
-
-    //load a PCD file using pcl::io function; alternatively, could subscribe to Kinect messages
-    string fname;
-    cout << "enter pcd file name: "; //prompt to enter file name
-    cin >> fname;
-    if (pcl::io::loadPCDFile<pcl::PointXYZRGB>(fname, *pclKinect_clr_ptr) == -1) //* load the file
-    {
-        ROS_ERROR("Couldn't read file \n");
-        return (-1);
-    }
-    //PCD file does not seem to record the reference frame;  set frame_id manually
-    pclKinect_clr_ptr->header.frame_id = "camera_depth_optical_frame";
-    ROS_INFO("view frame camera_depth_optical_frame on topics pcd, table_frame_pts and pts_above_table");
-
-    //will publish  pointClouds as ROS-compatible messages; create publishers; note topics for rviz viewing
-    ros::Publisher pubCloud = nh.advertise<sensor_msgs::PointCloud2>("/pcd", 1);
-    ros::Publisher pubTableFrame = nh.advertise<sensor_msgs::PointCloud2>("table_frame_pts", 1);
-    ros::Publisher pubPointsAboveTable = nh.advertise<sensor_msgs::PointCloud2>("pts_above_table", 1);
-    ros::Publisher pubPointsAboveRightTable = nh.advertise<sensor_msgs::PointCloud2>("pts_above_right_table", 1);
-
-    sensor_msgs::PointCloud2 ros_cloud_wrt_table, ros_pts_above_table, ros_cloud_orig, ros_pts_above_right_table;
-    //ros_cloud_wrt_table.header.frame_id = "table_frame";
 
     pcl::toROSMsg(*pclKinect_clr_ptr, ros_cloud_orig); //convert from PCL cloud to ROS message this way
     ros_cloud_orig.header.frame_id = "camera_depth_optical_frame";
@@ -135,54 +182,81 @@ int main(int argc, char **argv)
     affine_table_wrt_cam = get_table_frame_wrt_camera();
     affine_cam_wrt_table = affine_table_wrt_cam.inverse();
 
+    //* Transform the cloud to be w.r.t. a set frame.
+    //* For this case the set frame is the table_frame.
     pclUtils.transform_cloud(affine_cam_wrt_table, pclKinect_clr_ptr, output_cloud_wrt_table_ptr);
     pcl::toROSMsg(*output_cloud_wrt_table_ptr, ros_cloud_wrt_table);
     ros_cloud_wrt_table.header.frame_id = "table_frame";
 
-    //cout<<"enter 1: ";
-    //cin>>g_ans;
-    //find indicies of points above table:
     vector<int> indices;
     find_indices_of_plane_from_patch(output_cloud_wrt_table_ptr, indices);
     pcl::copyPointCloud(*output_cloud_wrt_table_ptr, indices, *pts_above_table_ptr); //extract these pts into new cloud
     pcl::toROSMsg(*pts_above_table_ptr, ros_pts_above_table);
     ros_pts_above_table.header.frame_id = "table_frame";
 
+    //! Is this defined in the table_frame?
     Eigen::Vector3f box_pt_min, box_pt_max;
     box_pt_min << 0.05, -1, 0.029;
     box_pt_max << 1, 0.2, 0.1;
-
-    vector<int> indices2;
+    
+    //! Filter out outliers
     pclUtils.box_filter(pts_above_table_ptr, box_pt_min, box_pt_max, indices);
     pcl::copyPointCloud(*pts_above_table_ptr, indices, *pts_above_right_table_ptr); //extract these pts into new cloud
     pcl::toROSMsg(*pts_above_right_table_ptr, ros_pts_above_right_table);           //convert to ros message for publication and display
     ros_pts_above_right_table.header.frame_id = "table_frame";
 
-    // Reduce the height of the block by half for the correct centroid calculation
-    int pts_block_size = pts_above_right_table_ptr->points.size();
-    float tot_x = 0;
-    float tot_y = 0;
-    for (int i = 0; i < pts_block_size; i++)
+    // calculating the coordinate of the blocks.
+    int npts_block_size = pts_above_right_table_ptr->points.size();
+
+    float block_x = 0;
+    float block_y = 0;
+    float block_z = 0;
+    for (int i = 0; i < npts_block_size; i++)
     {
-        tot_x += pts_above_right_table_ptr->points[i].x;
-        tot_y += pts_above_right_table_ptr->points[i].y;
+        block_x += pts_above_right_table_ptr->points[i].x;
+        block_y += pts_above_right_table_ptr->points[i].y;
     }
 
-    float block_x = tot_x/pts_block_size;
-    float block_y = tot_y/pts_block_size;
-    float block_z = 0;
+    block_x = block_x/npts_block_size;
+    block_y = block_y/npts_block_size;
 
+    if (isnan(block_x) || isnan(block_y) || npts_block_size == 0)
+    {
+        response.detect_success = false;
+        found_block = false;
+    }
+    else
+    {
+        block_transform.setOrigin(tf::Vector3(block_x, block_y, block_z));
+        block_transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+        response.detect_success = true;
+        found_block = true;
+        tf::transformStampedTFToMsg(tf::StampedTransform(block_transform, ros::Time::now(),"table_frame","block_frame"),response.object_transform);
+    }
+    
+    return true;
+}
+
+
+int main(int argc, char **argv)
+{
+    ros::init(argc, argv, "detect_object"); //node name
+    ros::NodeHandle nh;
+    nh_ptr = &nh;
+
+    // create a service server that return the location of an object (if there exists one)
+    ros::ServiceServer detect_object_service = nh.advertiseService("detect_object_service", detectObjectCallBack);
+
+    // check the call back
+    
+    tf::TransformBroadcaster br;
+    //ros_cloud_wrt_table.header.frame_id = "table_frame";
     while (ros::ok())
     {
-        pubTableFrame.publish(ros_cloud_wrt_table);
-        pubCloud.publish(ros_cloud_orig); // will not need to keep republishing if display setting is persistent
-        pubPointsAboveTable.publish(ros_pts_above_table);
-        pubPointsAboveRightTable.publish(ros_pts_above_right_table);
-
-        transform.setOrigin(tf::Vector3(block_x, block_y, block_z));
-        transform.setRotation(tf::Quaternion(0, 0, 0, 1));
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "table_frame", "block_frame"));
-
+        while (found_block == true)
+        {
+            br.sendTransform(tf::StampedTransform(block_transform, ros::Time::now(), "table_frame", "block_frame"));
+        }
         ros::spinOnce(); //pclUtils needs some spin cycles to invoke callbacks for new selected points
         ros::Duration(0.3).sleep();
     }

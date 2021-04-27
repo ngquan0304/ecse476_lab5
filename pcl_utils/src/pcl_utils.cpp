@@ -862,7 +862,7 @@ void PclUtils::box_filter(PointCloud<pcl::PointXYZRGB>::Ptr inputCloud, Eigen::V
         //check if in the box:
         if ((pt[0]>pt_min[0])&&(pt[0]<pt_max[0])&&(pt[1]>pt_min[1])&&(pt[1]<pt_max[1])&&(pt[2]>pt_min[2])&&(pt[2]<pt_max[2])) { 
             //passed box-crop test; include this point
-               indices.push_back(i);
+                indices.push_back(i);
         }
     }
     int n_extracted = indices.size();
