@@ -21,6 +21,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/PCLHeader.h>
 
+#include <pcl/filters/statistical_outlier_removal.h>
+
 //will use filter objects "passthrough" and "voxel_grid" in this example
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
@@ -37,7 +39,7 @@ bool got_kinect_image = false; //snapshot indicator
 bool found_block = false;
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclKinect_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>); //pointer for color version of pointcloud
-sensor_msgs::PointCloud2 ros_cloud_wrt_table, ros_pts_above_table, ros_cloud_orig, ros_pts_above_right_table;   // for debugging
+sensor_msgs::PointCloud2 ros_cloud_wrt_table, filtered_ros_cloud_wrt_table, ros_pts_above_table, ros_cloud_orig, ros_pts_above_right_table;   // for debugging
 
 tf::Transform block_transform;    // transformation of the block wrt the torso
 
@@ -169,6 +171,7 @@ bool detectObjectCallBack(detect_object::DetectObjectServiceMsgRequest &request,
     PclUtils pclUtils(nh_ptr);
     
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud_wrt_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered_output_cloud_wrt_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_above_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_above_right_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -186,15 +189,30 @@ bool detectObjectCallBack(detect_object::DetectObjectServiceMsgRequest &request,
     pcl::toROSMsg(*output_cloud_wrt_table_ptr, ros_cloud_wrt_table);
     ros_cloud_wrt_table.header.frame_id = "table_frame";
 
+    // filter outlier using statisticaloutlier removal
+    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+    sor.setInputCloud(output_cloud_wrt_table_ptr);
+    sor.setMeanK(100);
+    sor.setStddevMulThresh(0.7);
+    sor.filter(*filtered_output_cloud_wrt_table_ptr);
+    pcl::toROSMsg(*filtered_output_cloud_wrt_table_ptr, filtered_ros_cloud_wrt_table);
+    filtered_ros_cloud_wrt_table.header.frame_id = "table_frame";
+
     vector<int> indices;
-    find_indices_of_plane_from_patch(output_cloud_wrt_table_ptr, indices);
-    pcl::copyPointCloud(*output_cloud_wrt_table_ptr, indices, *pts_above_table_ptr); //extract these pts into new cloud
+    find_indices_of_plane_from_patch(filtered_output_cloud_wrt_table_ptr, indices);
+    pcl::copyPointCloud(*filtered_output_cloud_wrt_table_ptr, indices, *pts_above_table_ptr); //extract these pts into new cloud
     pcl::toROSMsg(*pts_above_table_ptr, ros_pts_above_table);
     ros_pts_above_table.header.frame_id = "table_frame";
 
+    // vector<int> indices;
+    // find_indices_of_plane_from_patch(output_cloud_wrt_table_ptr, indices);
+    // pcl::copyPointCloud(*output_cloud_wrt_table_ptr, indices, *pts_above_table_ptr); //extract these pts into new cloud
+    // pcl::toROSMsg(*pts_above_table_ptr, ros_pts_above_table);
+    // ros_pts_above_table.header.frame_id = "table_frame";
+
     //! Is this defined in the table_frame?
     Eigen::Vector3f box_pt_min, box_pt_max;
-    box_pt_min << 0.05, -1, 0.029;
+    box_pt_min << -1, -1, 0.025;
     box_pt_max << 1, 0.2, 0.1;
     
     //! Filter out outliers
@@ -246,7 +264,7 @@ int main(int argc, char **argv)
 
     // create a service server that return the location of an object (if there exists one)
     ros::ServiceServer detect_object_service = nh.advertiseService("detect_object_service", detectObjectCallBack);
-    //ros::Publisher filtered_pcd = nh.advertise<sensor_msgs::PointCloud2>("filtered_pcd",1);
+    ros::Publisher filtered_pcd = nh.advertise<sensor_msgs::PointCloud2>("filtered_pcd",1);
 
     ROS_INFO("detect_object_service is ON");
     ROS_INFO("preparing to check for block location on table");
@@ -255,9 +273,10 @@ int main(int argc, char **argv)
     tf::TransformBroadcaster br;
     //ros_cloud_wrt_table.header.frame_id = "table_frame";
     while (ros::ok())
-    {
+    {   
         if (found_block == true)
         {
+            filtered_pcd.publish(ros_pts_above_right_table);
             br.sendTransform(tf::StampedTransform(block_transform, ros::Time::now(), "table_frame", "block_frame"));
         }
         ros::spinOnce(); //pclUtils needs some spin cycles to invoke callbacks for new selected points
