@@ -1,0 +1,9 @@
+#goal definition [x,y]
+float32 position_x
+float32 position_y
+---
+#result definition
+bool success
+---
+#feedback
+float32 distance_to_goal
