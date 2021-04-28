@@ -1,5 +1,6 @@
 #goal definition [x,y]
 string jsp_data_t
+int mode
 ---
 #result definition
 bool success

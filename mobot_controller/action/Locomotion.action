@@ -1,6 +1,7 @@
 #goal definition [x,y]
 float32 position_x
 float32 position_y
+int32 mode
 ---
 #result definition
 bool success

@@ -87,7 +87,7 @@ class LocomotionAction {
                 
                     _action_server.publishFeedback(_feedback); // publish the feedback
 
-                    success = move2coord(goal_pos->position_x, goal_pos->position_y);
+                    success = move2coord(goal_pos->position_x, goal_pos->position_y, goal_pos->mode);
 
                     _feedback.distance_to_goal = distance_to_goal(current_pose, goal_pos->position_x, goal_pos->position_y);
 
@@ -106,8 +106,22 @@ class LocomotionAction {
         }
 
         // Take in a goal (x,y) and issue desired state, service calls, to command the robot's motion
-        bool move2coord(float goal_pose_x, float goal_pose_y)
+        bool move2coord(float goal_pose_x, float goal_pose_y, int operational_mode)
         {
+            const int MOTION = 0;
+            const int STOP = 1;
+            const int BACKUP = 2;
+
+            if (operational_mode == MOTION){
+                ROS_INFO("Operational Mode: Standard Motion to Coordinates");
+            }
+            else if (operational_mode == STOP) {
+                return stop();
+            }
+            else if (operational_mode == BACKUP){
+                return backUp();
+            }
+
             // Trajectory Builder
             TrajBuilder trajBuilder;
             
@@ -144,6 +158,7 @@ class LocomotionAction {
             // Keep x,y the same; rotate to des_psi
             goal_pose_rot = trajBuilder.xyPsi2PoseStamped(current_pose.pose.position.x, current_pose.pose.position.y, des_psi);
             
+            // *** Spin Motion ***
             // Start Constructing the Service's Request message
             srv.request.start_pos = current_pose;
             srv.request.goal_pos = goal_pose_rot;
