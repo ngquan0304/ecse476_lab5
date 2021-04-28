@@ -97,15 +97,43 @@ class ArmMotionAction {
             }
         }
 
+        // Play the JSP file
+        void play(string filepath){
+            //Have to figure out how to play the jsp from a file:
+            //[Learning ROS ws] roslaunch baxter_gazeo baxter_world.launch
+            //[Learning ROS ws] roslaunch baxter_launch_files baxter_playfile_nodes.launch
+            //[This Repo ws] rosrun pcd_utils display_pcd_files then arm1.pcd
+            //[This Repo ws] rosrun baxter_playfile_nodes baxter_playback arm1.jsp
+            //System("rosrun baxter_playfile_nodes baxter_playback " + filepath); 
+            
+            // mobot_controller::ServiceMsg srv;
+            // srv.request.start_pos = current_pose;
+            // srv.request.goal_pos = current_pose;
+            // srv.request.mode = "0"; 
+            // if (desired_state_client.call(srv))
+            // {
+            //     ROS_INFO("Stopped");
+            // }
+        }
+
+        bool difference(){
+            //Compare between the angles in jsp file and angles of arm
+        }
+
     
 };
 
 //Action Server
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "locomotion_action_server");
-    ArmMotionAction ArmMotionAction("locomotion_action_server");
+    char filename[150];
+    cout << "Enter full path for playfile: ";
+    cin.getline(filename, 100);
+
+    ros::init(argc, argv, "arm_motion_action_server");
+    ArmMotionAction ArmMotionAction("arm_motion_action_server");
     ros::spin();
+
     
     return 0;
 }
