@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>arm_motion</name>
+  <name>locomotion_action_server</name>
   <version>0.0.0</version>
-  <description>The arm_motion package</description>
+  <description>The locomotion_action_server package</description>
   
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -51,17 +51,6 @@
   <build_depend>odom_tf</build_depend>
   <build_depend>tf</build_depend>
 
-<build_depend>baxter_trajectory_streamer</build_depend>
-  
-  <build_depend>baxter_trajectory_streamer</build_depend>
-<build_depend>baxter_core_msgs</build_depend>
-<build_depend>sensor_msgs</build_depend>
-<build_depend>trajectory_msgs</build_depend>
-<build_depend>actionlib_msgs</build_depend>
-<build_depend>actionlib</build_depend>
-<build_depend>std_srvs</build_depend>
-<build_depend>simple_action_client</build_depend>
-
   <run_depend>roscpp</run_depend>
   <run_depend>nav_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
@@ -69,16 +58,6 @@
   <run_depend>xform_utils</run_depend>
   <run_depend>odom_tf</run_depend>
   <run_depend>tf</run_depend>
-
-<run_depend>baxter_trajectory_streamer</run_depend>
-  <run_depend>roscpp</run_depend>
-<run_depend>baxter_core_msgs</run_depend>
-<run_depend>sensor_msgs</run_depend>
-<run_depend>std_srvs</run_depend>
-<run_depend>trajectory_msgs</run_depend>
-<run_depend>actionlib_msgs</run_depend>
-<run_depend>actionlib</run_depend>
-<run_depend>simple_action_client</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -5,11 +5,9 @@
 #include <string>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Quaternion.h>
-#include <mobot_controller/ServiceMsg.h>
-#include <mobot_controller/ArmMotionAction.h>
-#include <mobot_controller/ArmMotionFeedback.h>
-#include <mobot_controller/ArmMotionResult.h>
-#include <traj_builder/traj_builder.h>
+#include <arm_motion/ArmMotionAction.h>
+#include <arm_motion/ArmMotionFeedback.h>
+#include <arm_motion/ArmMotionResult.h>
 #include <actionlib/server/simple_action_server.h>
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
@@ -18,8 +16,26 @@
 #include <string>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Quaternion.h>
-#include <mobot_controller/ServiceMsg.h>
-#include <traj_builder/traj_builder.h>
+
+#include <ros/ros.h>
+#include <stdlib.h>     /* getenv */
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/client/terminal_state.h>
+#include <baxter_trajectory_streamer/baxter_trajectory_streamer.h>
+
+#include <std_msgs/Int32.h>
+#include <arm_motion/trajAction.h>
+
+#define VECTOR_DIM 7 // e.g., a 7-dof vector
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/client/terminal_state.h>
 
 using namespace std;
 
@@ -46,9 +62,9 @@ class ArmMotionAction {
         // *** Action Control (Interface/Master) ***
         // Action Server (Goal, Feedback, Result)
         std::string _action_name; // Action Server's Name
-        actionlib::SimpleActionServer<mobot_controller::ArmMotionAction> _action_server; // Action Server
-        mobot_controller::ArmMotionFeedback _feedback; // Feedback
-        mobot_controller::ArmMotionResult _result; // Result
+        actionlib::SimpleActionServer<arm_motion::ArmMotionAction> _action_server; // Action Server
+        arm_motion::ArmMotionFeedback _feedback; // Feedback
+        arm_motion::ArmMotionResult _result; // Result
 
 
         // Booleans for tracking success and completion
@@ -103,7 +119,7 @@ class ArmMotionAction {
         ~ArmMotionAction(void){}
 
         // https://github.com/wsnewman/learning_ros_noetic/blob/991c494ffcf29d30e6c40db0f49d88e7bf59513d/Part_5/baxter/baxter_playfile_nodes/src/baxter_playfile_service.cpp
-        void executeActionCallback(const mobot_controller::ArmMotionGoalConstPtr &goal)
+        void executeActionCallback(const arm_motion::ArmMotionGoalConstPtr &goal)
         {
             ros::Rate r(1);
             bool success = false;
