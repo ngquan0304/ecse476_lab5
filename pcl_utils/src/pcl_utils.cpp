@@ -112,7 +112,7 @@ void PclUtils::fit_points_to_plane(Eigen::MatrixXf points_mat, Eigen::Vector3f &
     centroid_ = Eigen::MatrixXf::Zero(3, 1); // see http://eigen.tuxfamily.org/dox/AsciiQuickReference.txt
     
     //centroid = compute_centroid(points_mat);
-     for (int ipt = 0; ipt < npts; ipt++) {
+    for (int ipt = 0; ipt < npts; ipt++) {
         centroid_ += points_mat.col(ipt); //add all the column vectors together
     }
     centroid_ /= npts; //divide by the number of points to get the centroid    

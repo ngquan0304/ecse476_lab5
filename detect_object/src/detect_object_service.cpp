@@ -30,7 +30,7 @@
 #include <pcl_utils/pcl_utils.h> //a local library with some utility fncs
 #include <xform_utils/xform_utils.h>
 
-#include "detect_object/DetectObjectServiceMsg.h"
+#include "detect_object/DetectTransformServiceMsg.h"
 
 
 using namespace std;
@@ -105,48 +105,8 @@ Eigen::Affine3f get_table_frame_wrt_camera()
     return affine_table_wrt_camera;
 }
 
-Eigen::Affine3f get_block_frame_wrt_torso()
-{
-    bool tferr = true;
-    int ntries = 0;
-    XformUtils xformUtils;
-    tf::TransformListener tfListener;
-    tf::StampedTransform block_frame_wrt_torso_stf;
-
-    Eigen::Affine3f affine_block_frame_wrt_torso;
-    while (tferr)
-    {
-        tferr = false;
-        try
-        {
-            tfListener.lookupTransform("torso", "block_frame", ros::Time(0), block_frame_wrt_torso_stf);
-        }
-        catch (tf::TransformException &exception)
-        {
-            ROS_WARN("%s; retrying...", exception.what());
-            tferr = true;
-            ros::Duration(0.5).sleep(); // sleep for half a second
-            ros::spinOnce();
-            ntries++;
-            if (ntries > 5)
-            {
-                ROS_WARN("cannot find block_frame_wrt_torso");
-                ros::Duration(1.0).sleep();
-            }
-        }
-    }
-    ROS_INFO("tf is good for table w/rt camera");
-    xformUtils.printStampedTf(block_frame_wrt_torso_stf);
-
-    tf::Transform block_frame_wrt_torso_tf = xformUtils.get_tf_from_stamped_tf(block_frame_wrt_torso_stf);
-    affine_block_frame_wrt_torso = xformUtils.transformTFToAffine3f(block_frame_wrt_torso_tf);
-    //ROS_INFO("affine: ");
-    //xformUtils.printAffine(affine_block_frame_wrt_torso);
-    return affine_block_frame_wrt_torso;
-}
-
 // This function is to update the current variable block_transform.
-bool detectObjectCallBack(detect_object::DetectObjectServiceMsgRequest &request, detect_object::DetectObjectServiceMsgResponse &response)
+bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &request, detect_object::DetectTransformServiceMsgResponse &response)
 {
     ros::NodeHandle& nh_ref = *nh_ptr;
     // subscribe to the pointcloud2 topic
@@ -249,7 +209,7 @@ bool detectObjectCallBack(detect_object::DetectObjectServiceMsgRequest &request,
         block_transform.setRotation(tf::Quaternion(0, 0, 0, 1));
         response.detect_success = true;
         found_block = true;
-        tf::transformStampedTFToMsg(tf::StampedTransform(block_transform, ros::Time::now(),"table_frame","block_frame"),response.object_transform);
+        tf::transformStampedTFToMsg(tf::StampedTransform(block_transform, ros::Time::now(),"table_frame","block_frame"),response.detect_transform);
     }
     
     return true;
@@ -280,7 +240,7 @@ int main(int argc, char **argv)
             br.sendTransform(tf::StampedTransform(block_transform, ros::Time::now(), "table_frame", "block_frame"));
         }
         ros::spinOnce(); //pclUtils needs some spin cycles to invoke callbacks for new selected points
-        ros::Duration(0.3).sleep();
+        ros::Duration(0.1).sleep();
     }
 
     return 0;
