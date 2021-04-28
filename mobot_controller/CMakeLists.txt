@@ -5,10 +5,10 @@ find_package(catkin_simple REQUIRED)
 find_package(actionlib_msgs REQUIRED)
 
 # @Matthew - Added for action lib
-add_action_files(
-  DIRECTORY src/action
-  FILES Locomotion.action
-)
+# add_action_files(
+#   DIRECTORY src/action
+#   FILES Locomotion.action
+# )
 
 catkin_simple()
 

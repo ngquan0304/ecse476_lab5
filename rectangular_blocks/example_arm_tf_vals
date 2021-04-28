@@ -1,0 +1,25 @@
+arm5:
+- Translation: [0.644, 0.015, -0.186]
+- Rotation: in Quaternion [0.947, 0.321, 0.014, 0.005]
+            in RPY (radian) [3.124, -0.023, 0.654]
+            in RPY (degree) [178.987, -1.328, 37.464]
+
+arm8:
+- Translation: [0.800, -0.401, -0.180]
+- Rotation: in Quaternion [0.714, 0.700, 0.017, 0.015]
+            in RPY (radian) [3.097, -0.003, 1.551]
+            in RPY (degree) [177.423, -0.183, 88.866]
+
+arm9:
+- Translation: [0.414, -0.410, -0.186]
+- Rotation: in Quaternion [0.734, 0.679, 0.018, -0.006]
+            in RPY (radian) [3.126, -0.035, 1.494]
+            in RPY (degree) [179.125, -2.008, 85.597]
+
+arm10:
+- Translation: [0.464, 0.095, -0.186]
+- Rotation: in Quaternion [0.915, 0.403, 0.017, -0.023]
+            in RPY (radian) [-3.113, -0.050, 0.829]
+            in RPY (degree) [-178.379, -2.872, 47.486]
+
+

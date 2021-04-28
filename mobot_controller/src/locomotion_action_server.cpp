@@ -136,7 +136,7 @@ class LocomotionAction {
 
             // Desired rotation
             double des_psi = atan2(dy, dx);
-
+            
             // Output some information for the user
             ROS_INFO("start_x = %f, start_y = %f, goal_x = %f, goal_y = %f", x_start, y_start, x_end, y_end);
 
@@ -193,7 +193,7 @@ class LocomotionAction {
         }
 
         // Stop motion of the robot
-        void stop(){
+        bool stop(){
             mobot_controller::ServiceMsg srv;
             srv.request.start_pos = current_pose;
             srv.request.goal_pos = current_pose;
@@ -202,10 +202,11 @@ class LocomotionAction {
             {
                 ROS_INFO("Stopped");
             }
+            return true;
         }
 
         // Move the robot backward
-        void backUp()
+        bool backUp()
         {
             ROS_INFO("Backing up");
             TrajBuilder trajBuilder;
@@ -222,7 +223,8 @@ class LocomotionAction {
                 bool success_backup = srv.response.success;
                 ROS_INFO("rotate success? %d", success_backup);
             }
-            ros::spinOnce();
+            //ros::spinOnce();
+            return true;
         }
 
         // Function to calculate distance to the goal
