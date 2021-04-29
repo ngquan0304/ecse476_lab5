@@ -39,7 +39,7 @@ bool got_kinect_image = false; //snapshot indicator
 bool found_block = false;
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclKinect_clr_ptr(new pcl::PointCloud<pcl::PointXYZRGB>); //pointer for color version of pointcloud
-sensor_msgs::PointCloud2 ros_cloud_wrt_table, filtered_ros_cloud_wrt_table, ros_pts_above_table, ros_cloud_orig, ros_pts_above_right_table;   // for debugging
+sensor_msgs::PointCloud2 ros_cloud_wrt_table, filtered_ros_cloud_wrt_table, ros_pts_above_table, ros_cloud_orig, ros_pts_of_object_on_table;   // for debugging
 
 tf::Transform block_transform;    // transformation of the block wrt the torso
 
@@ -110,7 +110,7 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
 {
     ros::NodeHandle& nh_ref = *nh_ptr;
     // subscribe to the pointcloud2 topic
-    ros::Subscriber pointcloud_subscriber = nh_ref.subscribe("/pcd", 1, kinectCB);
+    ros::Subscriber pointcloud_subscriber = nh_ref.subscribe("/captured_pcl", 1, kinectCB);
 
     // reset the flag to check for kinect image
     got_kinect_image = false;
@@ -133,7 +133,7 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud_wrt_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered_output_cloud_wrt_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_above_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_above_right_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_of_object_on_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     pcl::toROSMsg(*pclKinect_clr_ptr, ros_cloud_orig); //convert from PCL cloud to ROS message this way
     ros_cloud_orig.header.frame_id = "camera_depth_optical_frame";
@@ -177,20 +177,20 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
     
     //! Filter out outliers
     pclUtils.box_filter(pts_above_table_ptr, box_pt_min, box_pt_max, indices);
-    pcl::copyPointCloud(*pts_above_table_ptr, indices, *pts_above_right_table_ptr); //extract these pts into new cloud
-    pcl::toROSMsg(*pts_above_right_table_ptr, ros_pts_above_right_table);           //convert to ros message for publication and display
-    ros_pts_above_right_table.header.frame_id = "table_frame";
+    pcl::copyPointCloud(*pts_above_table_ptr, indices, *pts_of_object_on_table_ptr); //extract these pts into new cloud
+    pcl::toROSMsg(*pts_of_object_on_table_ptr, ros_pts_of_object_on_table);           //convert to ros message for publication and display
+    ros_pts_of_object_on_table.header.frame_id = "table_frame";
 
     // calculating the coordinate of the blocks.
-    int npts_block_size = pts_above_right_table_ptr->points.size();
+    int npts_block_size = pts_of_object_on_table_ptr->points.size();
 
     float block_x = 0;
     float block_y = 0;
     float block_z = 0;
     for (int i = 0; i < npts_block_size; i++)
     {
-        block_x += pts_above_right_table_ptr->points[i].x;
-        block_y += pts_above_right_table_ptr->points[i].y;
+        block_x += pts_of_object_on_table_ptr->points[i].x;
+        block_y += pts_of_object_on_table_ptr->points[i].y;
     }
 
     block_x = block_x/npts_block_size;
@@ -224,7 +224,9 @@ int main(int argc, char **argv)
 
     // create a service server that return the location of an object (if there exists one)
     ros::ServiceServer detect_object_service = nh.advertiseService("detect_object_service", detectObjectCallBack);
-    ros::Publisher filtered_pcd = nh.advertise<sensor_msgs::PointCloud2>("filtered_pcd",1);
+    ros::Publisher object_pcl = nh.advertise<sensor_msgs::PointCloud2>("object_pcl",1);
+    ros::Publisher fitted_pcl = nh.advertise<sensor_msgs::PointCloud2>("fitted_pcl",1);
+    //ros::Publisher orig_pcl = nh.advertise<sensor_msgs::PointCloud2>("orig_pcl",1);
 
     ROS_INFO("detect_object_service is ON");
     ROS_INFO("preparing to check for block location on table");
@@ -235,8 +237,10 @@ int main(int argc, char **argv)
     while (ros::ok())
     {   
         if (found_block == true)
-        {
-            filtered_pcd.publish(ros_pts_above_right_table);
+        {   
+            //orig_pcl.publish(ros_cloud_orig);
+            fitted_pcl.publish(ros_cloud_wrt_table);
+            object_pcl.publish(ros_pts_of_object_on_table);
             br.sendTransform(tf::StampedTransform(block_transform, ros::Time::now(), "table_frame", "block_frame"));
         }
         ros::spinOnce(); //pclUtils needs some spin cycles to invoke callbacks for new selected points

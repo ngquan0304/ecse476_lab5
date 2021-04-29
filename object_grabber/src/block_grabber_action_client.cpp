@@ -16,7 +16,7 @@
 //        kinematic path to system_ref_frame (e.g. simply use system_ref_frame)
 
 
-#include<ros/ros.h>
+#include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
 #include <object_grabber/object_grabberAction.h>
@@ -25,7 +25,7 @@
 #include <Eigen/Geometry>
 #include <xform_utils/xform_utils.h>
 #include <object_manipulation_properties/object_ID_codes.h>
-#include<generic_gripper_services/genericGripperInterface.h>
+#include <generic_gripper_services/genericGripperInterface.h>
 
 using namespace std;
 XformUtils xformUtils; //type conversion utilities

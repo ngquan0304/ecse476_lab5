@@ -39,6 +39,7 @@ catkin_simple()
 # cs_add_executable(find_table_frame src/find_table_frame.cpp)
 # cs_add_executable(find_points_above_table src/find_points_above_table.cpp)
 # cs_add_executable(find_block src/find_block.cpp)
+cs_add_executable(capture_pcl_service src/capture_pcl_service.cpp)
 cs_add_executable(detect_object_service src/detect_object_service.cpp)
 cs_add_executable(detect_table_wrt_cam_service src/detect_table_wrt_cam_service.cpp)
 

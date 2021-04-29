@@ -5,10 +5,10 @@
 #include <string>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Quaternion.h>
-#include <mobot_controller/ServiceMsg.h>
-#include <mobot_controller/LocomotionAction.h>
-#include <mobot_controller/LocomotionFeedback.h>
-#include <mobot_controller/LocomotionResult.h>
+#include <locomotion_action_server/ServiceMsg.h>
+#include <locomotion_action_server/LocomotionAction.h>
+#include <locomotion_action_server/LocomotionFeedback.h>
+#include <locomotion_action_server/LocomotionResult.h>
 #include <traj_builder/traj_builder.h>
 #include <actionlib/server/simple_action_server.h>
 #include <ros/ros.h>
@@ -18,7 +18,7 @@
 #include <string>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Quaternion.h>
-#include <mobot_controller/ServiceMsg.h>
+#include <locomotion_action_server/ServiceMsg.h>
 #include <traj_builder/traj_builder.h>
 
 using namespace std;
@@ -34,13 +34,13 @@ class LocomotionAction {
         // *** Action Control (Interface/Master) ***
         // Action Server (Goal, Feedback, Result)
         std::string _action_name; // Action Server's Name
-        actionlib::SimpleActionServer<mobot_controller::LocomotionAction> _action_server; // Action Server
-        mobot_controller::LocomotionFeedback _feedback; // Feedback
-        mobot_controller::LocomotionResult _result; // Result
+        actionlib::SimpleActionServer<locomotion_action_server::LocomotionAction> _action_server; // Action Server
+        locomotion_action_server::LocomotionFeedback _feedback; // Feedback
+        locomotion_action_server::LocomotionResult _result; // Result
 
         // *** Motion Control (Subcomponent/Slaves) *** 
         // Desired State
-        ros::ServiceClient desired_state_client = _node_handle.serviceClient<mobot_controller::ServiceMsg>("des_state_publisher_service");
+        ros::ServiceClient desired_state_client = _node_handle.serviceClient<locomotion_action_server::ServiceMsg>("des_state_publisher_service");
 
         // Current State is outside the singleton
 
@@ -56,7 +56,7 @@ class LocomotionAction {
 
         ~LocomotionAction(void){}
 
-        void executeActionCallback(const mobot_controller::LocomotionGoalConstPtr &goal_pos)
+        void executeActionCallback(const locomotion_action_server::LocomotionGoalConstPtr &goal_pos)
         {
             ros::Rate r(1);
             bool success = false;
@@ -126,7 +126,7 @@ class LocomotionAction {
             TrajBuilder trajBuilder;
             
             // Variables for Constructing Desired State Service Message
-            mobot_controller::ServiceMsg srv; // Desired State's Service Message (start_pos, goal_pos, mode -> success?)
+            locomotion_action_server::ServiceMsg srv; // Desired State's Service Message (start_pos, goal_pos, mode -> success?)
             geometry_msgs::PoseStamped start_pose, goal_pose_trans, goal_pose_rot; // Desired States' Service Messages (Request portion)
             std::string mode; // Operational Mode (Spin, Forward, Halt)
             
@@ -209,7 +209,7 @@ class LocomotionAction {
 
         // Stop motion of the robot
         bool stop(){
-            mobot_controller::ServiceMsg srv;
+            locomotion_action_server::ServiceMsg srv;
             srv.request.start_pos = current_pose;
             srv.request.goal_pos = current_pose;
             srv.request.mode = "0"; 
@@ -225,7 +225,7 @@ class LocomotionAction {
         {
             ROS_INFO("Backing up");
             TrajBuilder trajBuilder;
-            mobot_controller::ServiceMsg srv;
+            locomotion_action_server::ServiceMsg srv;
             geometry_msgs::PoseStamped start_pose;
 
             start_pose.pose = current_state.pose.pose;

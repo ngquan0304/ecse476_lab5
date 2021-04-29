@@ -94,9 +94,8 @@ double createInterpolatedPlaneCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input_cl
 bool detectTableWrtCamCallBack(detect_object::DetectTransformServiceMsgRequest &request, detect_object::DetectTransformServiceMsgResponse &response)
 {
     ros::NodeHandle& nh_ref = *nh_ptr;
-    ros::Subscriber pointcloud_subscriber = nh_ref.subscribe("/pcd", 1, kinectCB);
+    ros::Subscriber pointcloud_subscriber = nh_ref.subscribe("/captured_pcl", 1, kinectCB);
 
-    
     got_kinect_image = false;
 
     //instantiate pointers to various clouds
@@ -270,10 +269,10 @@ int main(int argc, char** argv) {
     ros::ServiceServer detect_object_service = nh.advertiseService("detect_table_wrt_cam_service", detectTableWrtCamCallBack);
 
     //will publish  pointClouds as ROS-compatible messages; create publishers; note topics for rviz viewing
-    ros::Publisher pubCloud = nh.advertise<sensor_msgs::PointCloud2> ("/pcd", 1);
-    ros::Publisher pubPlane = nh.advertise<sensor_msgs::PointCloud2> ("planar_pts", 1);
-    ros::Publisher pubDnSamp = nh.advertise<sensor_msgs::PointCloud2> ("downsampled_pcd", 1);
-    ros::Publisher pubBoxFilt = nh.advertise<sensor_msgs::PointCloud2> ("box_filtered_pcd", 1);
+    // ros::Publisher pubCloud = nh.advertise<sensor_msgs::PointCloud2> ("/pcd", 1);
+    // ros::Publisher pubPlane = nh.advertise<sensor_msgs::PointCloud2> ("planar_pts", 1);
+    // ros::Publisher pubDnSamp = nh.advertise<sensor_msgs::PointCloud2> ("downsampled_pcd", 1);
+    // ros::Publisher pubBoxFilt = nh.advertise<sensor_msgs::PointCloud2> ("box_filtered_pcd", 1);
     ros::Publisher pubTableFrame = nh.advertise<sensor_msgs::PointCloud2> ("table_frame_pts", 1);
     ros::Publisher pubRansac = nh.advertise<sensor_msgs::PointCloud2> ("ransac_cloud",1);
     tf::TransformBroadcaster br;
