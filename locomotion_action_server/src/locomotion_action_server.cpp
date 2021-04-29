@@ -27,6 +27,10 @@ using namespace std;
 nav_msgs::Odometry current_state; // Current State (odom)
 geometry_msgs::PoseStamped current_pose; // Current Position
 
+const int STOP = 0;
+const int MOTION = 1;
+const int BACKUP = 2;
+
 class LocomotionAction {
     private:
         ros::NodeHandle _node_handle; // Node handle
@@ -108,10 +112,6 @@ class LocomotionAction {
         // Take in a goal (x,y) and issue desired state, service calls, to command the robot's motion
         bool move2coord(float goal_pose_x, float goal_pose_y, int operational_mode)
         {
-            const int MOTION = 0;
-            const int STOP = 1;
-            const int BACKUP = 2;
-
             if (operational_mode == MOTION){
                 ROS_INFO("Operational Mode: Standard Motion to Coordinates");
             }
@@ -267,7 +267,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "locomotion_action_server");
     ros::NodeHandle n;
     ros::Subscriber current_state_sub = n.subscribe("/current_state", 1, currentStateCallback);
-    LocomotionAction LocomotionAction("locomotion_action_server");
+    LocomotionAction LocomotionAction("locomotion_action");
     ros::spin();
     
     return 0;
