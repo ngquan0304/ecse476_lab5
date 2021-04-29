@@ -136,7 +136,7 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_of_object_on_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     pcl::toROSMsg(*pclKinect_clr_ptr, ros_cloud_orig); //convert from PCL cloud to ROS message this way
-    ros_cloud_orig.header.frame_id = "camera_depth_optical_frame";
+    ros_cloud_orig.header.frame_id = "camera_rgb_optical_frame";
 
     //find the transform of table w/rt camera and convert to an affine
     Eigen::Affine3f affine_table_wrt_cam, affine_cam_wrt_table;

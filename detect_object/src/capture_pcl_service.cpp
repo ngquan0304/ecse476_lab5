@@ -13,7 +13,7 @@ void kinectCB(const sensor_msgs::PointCloud2ConstPtr& cloud) {
         ROS_INFO("got new selected kinect image");
         captured_pcl = *cloud;
         // change header frame to the one we use
-        captured_pcl.header.frame_id = "camera_depth_optical_frame";
+        captured_pcl.header.frame_id = "camera_rgb_optical_frame";
         got_kinect_image = true;
     }
 }
@@ -23,8 +23,11 @@ bool capturePclCB(std_srvs::EmptyRequest &request, std_srvs::EmptyResponse &resp
     // reset the flag to check for kinect image
     got_kinect_image = false;
     ros::NodeHandle& nh_ref = *nh_ptr;
+
+    //! for actual robot, the topic isn't "/pcd"
+    //! use "/camera/depth_registered/points" instead
     // callback will run and check if there is data
-    ros::Subscriber pointcloud_subscriber = nh_ref.subscribe("/pcd", 1, kinectCB);
+    ros::Subscriber pointcloud_subscriber = nh_ref.subscribe("/camera/depth_registered/points", 1, kinectCB);
     
     // spin until obtain a snapshot
     ROS_INFO("waiting for kinect data");

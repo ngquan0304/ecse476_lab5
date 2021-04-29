@@ -18,7 +18,7 @@ nav_msgs::Odometry current_state;
 geometry_msgs::PoseStamped current_pose;
 ros::ServiceClient client;
 actionlib::SimpleActionClient<locomotion_action_server::LocomotionAction> *locomotion_action_ptr;
-double TIME_OUT = 20.0;  //1.0;
+double TIME_OUT = 1.0;  //1.0;
 ros::ServiceClient detect_block_client, capture_pcl_client;
 
 const int STOP = 0;
