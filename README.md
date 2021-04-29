@@ -1,7 +1,22 @@
+## To run top_commander:
+- Must source to learning_ros before catkin_make
+- Run locomotion launch file:
+  
+`roslaunch locomotion_action_server launch_locomotion_nodes.launch`
+
+- Run perception launch file:
+
+`roslaunch locomotion_action_server launch_locomotion_nodes.launch`
+
+- Run top_commander:
+
+`rosrun jinx_merry_commander top_commander`
+
+---
 ## Locomotion Package
 - Initialize robot/sim and maps:
 
-`roslaunch mobot_urdf mobot_in_pen.laucnh`  (no need if run jinx/merry)
+`roslaunch mobot_urdf mobot_in_pen.launch`  (no need if run jinx/merry)
 
 `rosrun map_server map_server starting_pen_map.yaml`
 
@@ -13,17 +28,17 @@ or
 
 `rosrun amcl amcl`
 
-`rosrun mobot_controller current_state_publisher`
+`rosrun locomotion_action_server current_state_publisher`
 
-`rosrun mobot_controller des_state_publisher_service`
+`rosrun locomotion_action_server des_state_publisher_service`
 
-`rosrun mobot_controller lin_steering_wrt_amcl_and_odom`
+`rosrun locomotion_action_server lin_steering_wrt_amcl_and_odom`
 
-`rosrun mobot_controller locomotion_action_server`
+`rosrun locomotion_action_server locomotion_action_server`
 
 - Testing command:
 
-`rostopic pub locomotion_action_server/goal mobot_controller/LocomotionActionGoal` then tab to fill in the rest
+`rostopic pub locomotion_action_server/goal locomotion_action_server/LocomotionActionGoal` then tab to fill in the rest
 ## Perception Package
 - Initialize the pcd/robot kinect
   
