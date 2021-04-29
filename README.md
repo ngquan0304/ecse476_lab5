@@ -6,7 +6,7 @@
 
 - Run perception launch file:
 
-`roslaunch locomotion_action_server launch_locomotion_nodes.launch`
+`roslaunch detect_object launch_detect_object_nodes.launch`
 
 - Run top_commander:
 
