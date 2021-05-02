@@ -30,6 +30,12 @@
 #include <pcl_utils/pcl_utils.h> //a local library with some utility fncs
 #include <xform_utils/xform_utils.h>
 
+#include <eigen3/Eigen/Eigen>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Geometry>
+#include <eigen3/Eigen/Eigenvalues>
+#include <eigen3/Eigen/SVD>
+
 #include "detect_object/DetectTransformServiceMsg.h"
 
 
@@ -103,6 +109,55 @@ Eigen::Affine3f get_table_frame_wrt_camera()
     //ROS_INFO("affine: ");
     //xformUtils.printAffine(affine_table_wrt_camera);
     return affine_table_wrt_camera;
+}
+
+
+// A helper function to calculate the centroid of a pointcloud
+bool find_centroid_vec(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_ptr, Eigen::Vector3f &C_vec)
+{
+    return true;
+}
+
+// A helper function to calculate the rotation matrix of a block using it's upper surface
+//! ASSUMPTION: the block is layed flat on the table. (longest axis parallel to the table)
+bool find_object_rotation_mat(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_ptr, Eigen::Vector3f &C_vec, Eigen::Matrix3f &R_mat)
+{
+    ROS_INFO("Finding rotation matrix");
+    // number of point of the upper surface of the plot
+    int npts = input_cloud_ptr->points.size();
+    
+    // stop n return if there is no data in input_cloud_ptr
+    if (npts == 0) 
+    {
+        ROS_ERROR("There is no block to find rotation");
+        return false;
+    }
+
+    // define a matrix storing x,y coord of cloud centered about centroid.
+    Eigen::MatrixXf pcl_cen(2,npts);
+    
+    // populate the matrix with x,y data from the cloud
+    // center the pointcloud around its centroid
+    for (int i = 0; i < npts; i++)
+    {
+        pcl_cen(0,i) = input_cloud_ptr->points[i].x - C_vec.x();
+        pcl_cen(1,i) = input_cloud_ptr->points[i].y - C_vec.y();
+    }
+
+    // scatter matrix
+    Eigen::Matrix2f S = pcl_cen*(pcl_cen.transpose());
+
+    // SVD to find major axis:
+    JacobiSVD<Matrix2f> svd(S, ComputeFullU);
+
+    cout << svd.matrixU() << endl;
+
+    // Eigen::Matrix2f U = svd.matrixU();
+    R_mat = Matrix3f::Zero();
+    R_mat.block(0,0,2,2) = svd.matrixU();
+    R_mat(2,2) = 1;
+
+    return true;
 }
 
 // This function is to update the current variable block_transform.
@@ -196,6 +251,11 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
     block_x = block_x/npts_block_size;
     block_y = block_y/npts_block_size;
 
+    Eigen::Vector3f centroid(block_x, block_y, 0);
+    Eigen::Matrix3f R_mat;
+    find_object_rotation_mat(pts_of_object_on_table_ptr, centroid, R_mat);
+    Eigen::Quaternionf q(R_mat);
+
     if (isnan(block_x) || isnan(block_y) || npts_block_size == 0)
     {
         ROS_INFO("Could not found any block on the table");
@@ -206,7 +266,7 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
     {
         ROS_INFO("Found a block on the table");
         block_transform.setOrigin(tf::Vector3(block_x, block_y, block_z));
-        block_transform.setRotation(tf::Quaternion(0, 0, 0, 1));
+        block_transform.setRotation(tf::Quaternion(q.x(), q.y(), q.z(), q.w()));
         response.detect_success = true;
         found_block = true;
         tf::transformStampedTFToMsg(tf::StampedTransform(block_transform, ros::Time::now(),"table_frame","block_frame"),response.detect_transform);
@@ -214,7 +274,6 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
     
     return true;
 }
-
 
 int main(int argc, char **argv)
 {

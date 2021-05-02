@@ -2,5 +2,5 @@
     <include file="$(find detect_object)/launch/camera_frame_wrt_head.launch" />
     <include file="$(find detect_object)/launch/table_frame_wrt_cam.launch" />
     <node name="capture_current_pcl_srv" pkg="detect_object" type="capture_pcl_service"/>
-    <node name="detect_object_srv" pkg="detect_object" type="detect_object_service"/>
+    <!-- <node name="detect_object_srv" pkg="detect_object" type="detect_object_service"/> -->
 </launch>
