@@ -13,7 +13,7 @@ void kinectCB(const sensor_msgs::PointCloud2ConstPtr& cloud) {
         ROS_INFO("got new selected kinect image");
         captured_pcl = *cloud;
         // change header frame to the one we use
-        captured_pcl.header.frame_id = "camera_rgb_optical_frame";
+        // captured_pcl.header.frame_id = "camera_rgb_optical_frame";
         got_kinect_image = true;
     }
 }

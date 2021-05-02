@@ -1,7 +1,7 @@
 <launch>
     <include file="$(find detect_object)/launch/camera_frame_wrt_head.launch" />
     <include file="$(find detect_object)/launch/table_frame_wrt_cam.launch" />
-    <node pkg="tf" type="static_transform_publisher" name="rgb_depth" args="0 0 0 0 0 0 1 camera_depth_optical_frame camera_rgb_optical_frame 50"/>
+    <!-- <node pkg="tf" type="static_transform_publisher" name="rgb_depth" args="0.025 0 0 0 0 0 1 camera_depth_optical_frame camera_rgb_optical_frame 50"/> -->
     <node pkg="tf" type="static_transform_publisher" name="error_offset" args="0.018914753   0.015337001   0.010569165  -0.000039710   0.014384854  -0.213900447   0.976749545 robot_block_frame adjusted_block_frame 50"/>
     <node pkg="tf" type="static_transform_publisher" name="real_sim_table" args="0.006063183  -0.023102778  -0.000049069  -0.000028767  -0.000025926   0.208618640   0.977997066 torso real_sim_torso 50"/>
     <node pkg="tf" type="static_transform_publisher" name="real_table" args="0.0188833   0.0142753   0.0129660   0.0027190   0.0148428  -0.2138833   0.9767427 real_sim_torso real_torso 50"/>

@@ -54,7 +54,7 @@ void kinectCB(const sensor_msgs::PointCloud2ConstPtr& cloud) {
         ROS_INFO("got new selected kinect image");
         pcl::fromROSMsg(*cloud, *pclKinect_clr_ptr);
         // change header frame to the one we use
-        pclKinect_clr_ptr->header.frame_id = "camera_depth_optical_frame";
+        pclKinect_clr_ptr->header.frame_id = "camera_depth_optical_frame"; // originally was depth one, not rgb
         ROS_INFO("image has  %d * %d points", pclKinect_clr_ptr->width, pclKinect_clr_ptr->height);
         got_kinect_image = true;
     }
@@ -85,7 +85,7 @@ Eigen::Affine3f get_table_frame_wrt_camera()
         tferr = false;
         try
         {
-            tfListener.lookupTransform("camera_depth_optical_frame", "table_frame", ros::Time(0), table_frame_wrt_cam_stf);
+            tfListener.lookupTransform("camera_depth_optical_frame", "table_frame", ros::Time(0), table_frame_wrt_cam_stf); // was rgb
         }
         catch (tf::TransformException &exception)
         {
@@ -209,7 +209,7 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr pts_of_object_on_table_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     pcl::toROSMsg(*pclKinect_clr_ptr, ros_cloud_orig); //convert from PCL cloud to ROS message this way
-    ros_cloud_orig.header.frame_id = "camera_rgb_optical_frame";
+    ros_cloud_orig.header.frame_id = "camera_depth_optical_frame";
 
     //find the transform of table w/rt camera and convert to an affine
     Eigen::Affine3f affine_table_wrt_cam, affine_cam_wrt_table;
