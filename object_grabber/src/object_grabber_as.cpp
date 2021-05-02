@@ -2,7 +2,7 @@
 // wsn, November, 2016
 // ObjectGrabber action server w/ ObjectGrabber class
 
-#include<ros/ros.h>
+#include <ros/ros.h>
 #include <object_grabber/object_grabber.h>
 
 int main(int argc, char** argv) {

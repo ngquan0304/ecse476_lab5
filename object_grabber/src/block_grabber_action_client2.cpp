@@ -1,6 +1,5 @@
 // block_grabber_action_client: minimalist client
 // wsn, November, 2016
-//updated April, 2021
 // use with object_grabber action server called "objectGrabberActionServer"
 // in file object_grabber_as.cpp
 
@@ -48,20 +47,45 @@ void set_example_object_frames(geometry_msgs::PoseStamped &object_poseStamped,
     //hard code an object pose; later, this will come from perception
     //specify reference frame in which this pose is expressed:
     //will require that "system_ref_frame" is known to tf
+    
+ /*    arm5:
+- Translation: [0.644, 0.015, -0.186]
+- Rotation: in Quaternion [0.947, 0.321, 0.014, 0.005]
+            in RPY (radian) [3.124, -0.023, 0.654]
+            in RPY (degree) [178.987, -1.328, 37.464]
+
+arm8:
+- Translation: [0.800, -0.401, -0.180]
+- Rotation: in Quaternion [0.714, 0.700, 0.017, 0.015]
+            in RPY (radian) [3.097, -0.003, 1.551]
+            in RPY (degree) [177.423, -0.183, 88.866]
+
+arm9:
+- Translation: [0.414, -0.410, -0.186]
+- Rotation: in Quaternion [0.734, 0.679, 0.018, -0.006]
+            in RPY (radian) [3.126, -0.035, 1.494]
+            in RPY (degree) [179.125, -2.008, 85.597]
+
+arm10:
+- Translation: [0.464, 0.095, -0.186]
+- Rotation: in Quaternion [0.915, 0.403, 0.017, -0.023]
+            in RPY (radian) [-3.113, -0.050, 0.829]
+            in RPY (degree) [-178.379, -2.872, 47.486]
+  */
     object_poseStamped.header.frame_id = "torso"; //set object pose; ref frame must be connected via tf
-    object_poseStamped.pose.position.x = 0.527;
-    object_poseStamped.pose.position.y = -0.439;
-    object_poseStamped.pose.position.z = -0.14; //
-    object_poseStamped.pose.orientation.x = 0.0; //block x-axis parallel to torso y axis
-    object_poseStamped.pose.orientation.y = 0.0;
+    object_poseStamped.pose.position.x = 0.827; //0.414; //0.644; //0.800;
+    object_poseStamped.pose.position.y = -0.413; //-0.410; //0.015; //-0.401;
+    object_poseStamped.pose.position.z = -0.150; //fingertips touch tabletop at z=-0.180 w/rt torso
+    object_poseStamped.pose.orientation.x = 0;
+    object_poseStamped.pose.orientation.y = 0;
     object_poseStamped.pose.orientation.z = 0.707;
     object_poseStamped.pose.orientation.w = 0.707;
     object_poseStamped.header.stamp = ros::Time::now();
 
     object_dropoff_poseStamped = object_poseStamped; //specify desired drop-off pose of object
-    //object_dropoff_poseStamped.pose.position.x = 0.627;  //move block forward by 10cm
-    //object_dropoff_poseStamped.pose.position.y = -0.439;
-    //object_dropoff_poseStamped.pose.position.z = 0.793; 
+    // object_dropoff_poseStamped.pose.position.x = 0.8;
+    // object_dropoff_poseStamped.pose.position.y = -0.4;
+    // object_dropoff_poseStamped.pose.position.z = -0.180; 
 }
 
 int main(int argc, char** argv) {
@@ -159,8 +183,14 @@ int main(int argc, char** argv) {
     object_grabber_ac.sendGoal(object_grabber_goal, &objectGrabberDoneCb);
     ROS_INFO("waiting on result");
     finished_before_timeout = object_grabber_ac.waitForResult(ros::Duration(30.0));
-    
-        //move to waiting pose
+
+
+    if (!finished_before_timeout) {
+        ROS_WARN("giving up waiting on result ");
+        return 1;
+    }
+
+    //move to waiting pose
     ROS_INFO("sending command to move to waiting pose");
     object_grabber_goal.action_code = object_grabber::object_grabberGoal::MOVE_TO_WAITING_POSE;
     object_grabber_ac.sendGoal(object_grabber_goal, &objectGrabberDoneCb);
@@ -169,11 +199,8 @@ int main(int argc, char** argv) {
         ROS_WARN("giving up waiting on result ");
         return 1;
     }
-    
 
-    if (!finished_before_timeout) {
-        ROS_WARN("giving up waiting on result ");
-        return 1;
-    }
     return 0;
+
+
 }
