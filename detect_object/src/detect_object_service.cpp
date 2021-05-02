@@ -149,13 +149,31 @@ bool find_object_rotation_mat(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud
 
     // SVD to find major axis:
     JacobiSVD<Matrix2f> svd(S, ComputeFullU);
+    
+    Eigen::Vector2f x_vec, y_vec;
+    cout << "U = " << svd.matrixU() << endl;
+    cout << "sig1 = " << svd.singularValues()[0] << " | " << "sig2 = " << svd.singularValues()[1] << endl;
 
-    cout << svd.matrixU() << endl;
+    if (svd.singularValues()[0] >= svd.singularValues()[1])
+    {
+        x_vec = svd.matrixU().col(0);
+        y_vec = svd.matrixU().col(1);
+    }
+    else
+    {
+        x_vec = svd.matrixU().col(1);
+        y_vec = svd.matrixU().col(0);
+    }
 
     // Eigen::Matrix2f U = svd.matrixU();
     R_mat = Matrix3f::Zero();
-    R_mat.block(0,0,2,2) = svd.matrixU();
-    R_mat(2,2) = 1;
+    R_mat.block<2,1>(0,0) = x_vec;
+    R_mat.block<2,1>(0,1) = y_vec;
+    R_mat(2,2) = -1;
+
+    // Due to unknown direction of the eigenvector, we just want to ensure that the z of the block is always upward wrt table.
+    if (R_mat.determinant() < 0)
+    R_mat.col(1) = -R_mat.col(1);
 
     return true;
 }
@@ -254,7 +272,12 @@ bool detectObjectCallBack(detect_object::DetectTransformServiceMsgRequest &reque
     Eigen::Vector3f centroid(block_x, block_y, 0);
     Eigen::Matrix3f R_mat;
     find_object_rotation_mat(pts_of_object_on_table_ptr, centroid, R_mat);
+
+    cout << "R_mat_det = " << R_mat.determinant() << endl;
+
     Eigen::Quaternionf q(R_mat);
+
+    cout << "quat = " << q.x() << " , " << q.y() << " , " << q.z() << " , " << q.w() << endl;
 
     if (isnan(block_x) || isnan(block_y) || npts_block_size == 0)
     {

@@ -12,6 +12,13 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
 #include <std_srvs/Empty.h>
+
+#include <xform_utils/xform_utils.h>
+
+#include <eigen3/Eigen/Eigen>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Geometry>
+
 using namespace std;
 
 nav_msgs::Odometry current_state;
@@ -29,6 +36,45 @@ void currStateCallback(const nav_msgs::Odometry &odom)
 {
     current_state = odom;
     current_pose.pose = current_state.pose.pose;
+}
+
+Eigen::Affine3f get_block_frame_wrt_torso()
+{
+    bool tferr = true;
+    int ntries = 0;
+    XformUtils xformUtils;
+    tf::TransformListener tfListener;
+    tf::StampedTransform block_frame_wrt_real_torso_stf;
+
+    Eigen::Affine3f affine_block_frame_wrt_real_torso;
+    while (tferr)
+    {
+        tferr = false;
+        try
+        {
+            tfListener.lookupTransform("real_torso", "block_frame", ros::Time(0), block_frame_wrt_real_torso_stf);
+        }
+        catch (tf::TransformException &exception)
+        {
+            ROS_WARN("%s; retrying...", exception.what());
+            tferr = true;
+            ros::Duration(0.5).sleep(); // sleep for half a second
+            ros::spinOnce();
+            ntries++;
+            if (ntries > 5)
+            {
+                ROS_WARN("couldn't find block_frame_wrt_torso");
+                ros::Duration(1.0).sleep();
+            }
+        }
+    }
+    ROS_INFO("tf is good for block_frame w/rt torso");
+    xformUtils.printStampedTf(block_frame_wrt_real_torso_stf);
+
+    tf::Transform block_frame_wrt_real_torso_tf = xformUtils.get_tf_from_stamped_tf(block_frame_wrt_real_torso_stf);
+    affine_block_frame_wrt_real_torso = xformUtils.transformTFToAffine3f(block_frame_wrt_real_torso_tf);
+
+    return affine_block_frame_wrt_real_torso;
 }
 
 bool move(float x, float y){
