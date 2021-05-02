@@ -57,7 +57,5 @@ or
 `rosservice call /detect_table_wrt_cam_service`
 
 `rosrun tf tf_echo block_frame torso`
-## Manipulation Package
 
-
-## Gripping Package
+## Object Grabber Client
