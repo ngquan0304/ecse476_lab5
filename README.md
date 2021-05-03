@@ -38,24 +38,33 @@ or
 
 - Testing command:
 
-`rostopic pub locomotion_action_server/goal locomotion_action_server/LocomotionActionGoal` then tab to fill in the rest
+`rostopic pub locomotion_action_server/goal locomotion_action_server/LocomotionActionGoal` 
+
+then tab to fill in the rest
 ## Perception Package
+- Setup launch files:
+  - For real Baxter:
+    
+    `roslaunch detect_object launch_detect_object_nodes_real_robot.launch`
+
+  - For sim Baxter:
+
+    `roslaucnh detect_object real_robot_sim.launch`
+
+    `roslaunch detect_object launch_detect_object_nodes_sim_robot.launch`
+
 - Initialize the pcd/robot kinect
-  
-`roslaunch pcl_utils display_pcd_file` (no need if run jinx/merry)
 
-- Perception services:
-
-`rosrun detect_object detect_object_service`
-
-`rosrun detect_object detect_table_wrt_cam_service`
+    `roslaunch pcl_utils display_pcd_file` (no need if run jinx/merry)
 
 - Testing command:
 
-`rosservice call /detect_object_service`
+    `rosservice call /detect_object_service`
 
-`rosservice call /detect_table_wrt_cam_service`
+    `rosservice call /detect_table_wrt_cam_service`
 
-`rosrun tf tf_echo block_frame torso`
+- Check for block position and orientation
+
+    `rosrun tf tf_echo block_frame torso`
 
 ## Object Grabber Client
