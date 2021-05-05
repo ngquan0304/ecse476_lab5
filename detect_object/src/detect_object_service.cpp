@@ -169,11 +169,16 @@ bool find_object_rotation_mat(pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud
     R_mat = Matrix3f::Zero();
     R_mat.block<2,1>(0,0) = x_vec;
     R_mat.block<2,1>(0,1) = y_vec;
-    R_mat(2,2) = -1;
+    R_mat(2,2) = 1;
+
+    cout << "R_mat raw" << endl;
+    cout << R_mat << endl;
 
     // Due to unknown direction of the eigenvector, we just want to ensure that the z of the block is always upward wrt table.
-    if (R_mat.determinant() < 0)
-    R_mat.col(1) = -R_mat.col(1);
+    if (R_mat.determinant() < 0)    R_mat.col(1) = -R_mat.col(1); // swap so x pointing to the left of the robot
+
+    cout << "R_mat adjusted" << endl;
+    cout << R_mat << endl;
 
     return true;
 }

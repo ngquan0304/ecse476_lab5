@@ -11,7 +11,9 @@
                 "/home/ngquan0304/ws/src/Mobile-Robotics-Lab5/pcl_utils/include/**",
                 "/home/ngquan0304/ws/src/Mobile-Robotics-Lab5/xform_utils/include/**",
                 "/home/ngquan0304/ws/src/Mobile-Robotics-Lab5/mobot_controller/include/**",
+                "/home/ngquan0304/ros_ws/devel/include/**",
                 "/usr/include/**"
+
             ],
             "name": "ROS"
         }

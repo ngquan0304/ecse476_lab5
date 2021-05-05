@@ -73,9 +73,9 @@ arm10:
             in RPY (degree) [-178.379, -2.872, 47.486]
   */
     object_poseStamped.header.frame_id = "torso"; //set object pose; ref frame must be connected via tf
-    object_poseStamped.pose.position.x = 0.827; //0.414; //0.644; //0.800;
-    object_poseStamped.pose.position.y = -0.413; //-0.410; //0.015; //-0.401;
-    object_poseStamped.pose.position.z = -0.150; //fingertips touch tabletop at z=-0.180 w/rt torso
+    object_poseStamped.pose.position.x = 0.477; //0.644; //0.800;
+    object_poseStamped.pose.position.y = -0.386; //0.015; //-0.401;
+    object_poseStamped.pose.position.z = -0.160; //fingertips touch tabletop at z=-0.180 w/rt torso
     object_poseStamped.pose.orientation.x = 0;
     object_poseStamped.pose.orientation.y = 0;
     object_poseStamped.pose.orientation.z = 0.707;
@@ -86,6 +86,52 @@ arm10:
     // object_dropoff_poseStamped.pose.position.x = 0.8;
     // object_dropoff_poseStamped.pose.position.y = -0.4;
     // object_dropoff_poseStamped.pose.position.z = -0.180; 
+}
+
+void get_block_frame_wrt_torso(geometry_msgs::PoseStamped &object_poseStamped)
+{
+    bool tferr = true;
+    int ntries = 0;
+    tf::TransformListener tfListener;
+    tf::StampedTransform block_frame_wrt_torso_stf;
+
+    while (tferr)
+    {
+        tferr = false;
+        try
+        {
+            tfListener.lookupTransform("torso", "block_frame", ros::Time(0), block_frame_wrt_torso_stf); // was rgb
+        }
+        catch (tf::TransformException &exception)
+        {
+            ROS_WARN("%s; retrying...", exception.what());
+            tferr = true;
+            ros::Duration(0.5).sleep(); // sleep for half a second
+            ros::spinOnce();
+            ntries++;
+            if (ntries > 5)
+            {
+                ROS_WARN("did you launch detect_object service?");
+                ros::Duration(1.0).sleep();
+            }
+        }
+    }
+    ROS_INFO("tf is good for table w/rt camera");
+    xformUtils.printStampedTf(block_frame_wrt_torso_stf);
+
+    object_poseStamped.header.frame_id = "torso"; //set object pose; ref frame must be connected via tf
+    object_poseStamped.pose.position.x = block_frame_wrt_torso_stf.getOrigin().x();//0.634;//0.527;
+    object_poseStamped.pose.position.y = block_frame_wrt_torso_stf.getOrigin().y();//-0.002;//-0.439;
+    object_poseStamped.pose.position.z = block_frame_wrt_torso_stf.getOrigin().z() - 0.02; //-0.179;//-0.14; //
+    object_poseStamped.pose.orientation.x = block_frame_wrt_torso_stf.getRotation().x();//0.0; //block x-axis parallel to torso y axis
+    object_poseStamped.pose.orientation.y = block_frame_wrt_torso_stf.getRotation().y();//0.305;//0.0;
+    object_poseStamped.pose.orientation.z = block_frame_wrt_torso_stf.getRotation().z();//0.010;//0.707;
+    object_poseStamped.pose.orientation.w = block_frame_wrt_torso_stf.getRotation().w();//0.009;//0.707;
+    object_poseStamped.header.stamp = ros::Time(0);
+
+    ROS_INFO("Received block's location and orientaion");
+
+    cout << object_poseStamped << endl;
 }
 
 int main(int argc, char** argv) {
@@ -104,7 +150,12 @@ int main(int argc, char** argv) {
     geometry_msgs::PoseStamped object_dropoff_poseStamped;
     //specify object pick-up and drop-off frames using simple test fnc
     //more generally, pick-up comes from perception and drop-off comes from task
-    set_example_object_frames(object_pickup_poseStamped, object_dropoff_poseStamped);
+    
+    //set_example_object_frames(object_pickup_poseStamped, object_dropoff_poseStamped);
+    get_block_frame_wrt_torso(object_pickup_poseStamped);
+    object_dropoff_poseStamped = object_pickup_poseStamped;
+
+
 
     actionlib::SimpleActionClient<object_grabber::object_grabberAction> object_grabber_ac("object_grabber_action_service", true);
 

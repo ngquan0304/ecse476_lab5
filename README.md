@@ -68,3 +68,19 @@ then tab to fill in the rest
     `rosrun tf tf_echo block_frame torso`
 
 ## Object Grabber Client
+
+
+---
+only for sim:
+    
+    roslaunch detect_object real_robot_sim.launch 
+
+run: (make sure to load map before doing this)
+
+    roslaunch detect_object launch_detect_object_nodes_sim_robot.launch 
+
+    roslaunch locomotion_action_server launch_locomotion_nodes.launch 
+
+    roslaunch object_grabber baxter_object_grabber_nodes.launch
+
+    

@@ -49,23 +49,69 @@ void set_example_object_frames(geometry_msgs::PoseStamped &object_poseStamped,
     //specify reference frame in which this pose is expressed:
     //will require that "system_ref_frame" is known to tf
     object_poseStamped.header.frame_id = "torso"; //set object pose; ref frame must be connected via tf
-    object_poseStamped.pose.position.x = 0.527;
-    object_poseStamped.pose.position.y = -0.439;
-    object_poseStamped.pose.position.z = -0.14; //
-    object_poseStamped.pose.orientation.x = 0.0; //block x-axis parallel to torso y axis
-    object_poseStamped.pose.orientation.y = 0.0;
-    object_poseStamped.pose.orientation.z = 0.707;
-    object_poseStamped.pose.orientation.w = 0.707;
+    object_poseStamped.pose.position.x = 0.634;//0.527;
+    object_poseStamped.pose.position.y = -0.002;//-0.439;
+    object_poseStamped.pose.position.z = -0.179;//-0.14; //
+    object_poseStamped.pose.orientation.x = 0.952;//0.0; //block x-axis parallel to torso y axis
+    object_poseStamped.pose.orientation.y = 0.305;//0.0;
+    object_poseStamped.pose.orientation.z = 0.010;//0.707;
+    object_poseStamped.pose.orientation.w = 0.009;//0.707;
     object_poseStamped.header.stamp = ros::Time::now();
-
+    
     object_dropoff_poseStamped = object_poseStamped; //specify desired drop-off pose of object
     //object_dropoff_poseStamped.pose.position.x = 0.627;  //move block forward by 10cm
     //object_dropoff_poseStamped.pose.position.y = -0.439;
     //object_dropoff_poseStamped.pose.position.z = 0.793; 
 }
 
+void get_block_frame_wrt_torso(geometry_msgs::PoseStamped &object_poseStamped)
+{
+    bool tferr = true;
+    int ntries = 0;
+    tf::TransformListener tfListener;
+    tf::StampedTransform block_frame_wrt_torso_stf;
+
+    while (tferr)
+    {
+        tferr = false;
+        try
+        {
+            tfListener.lookupTransform("block_frame", "torso", ros::Time(0), block_frame_wrt_torso_stf); // was rgb
+        }
+        catch (tf::TransformException &exception)
+        {
+            ROS_WARN("%s; retrying...", exception.what());
+            tferr = true;
+            ros::Duration(0.5).sleep(); // sleep for half a second
+            ros::spinOnce();
+            ntries++;
+            if (ntries > 5)
+            {
+                ROS_WARN("did you launch detect_object service?");
+                ros::Duration(1.0).sleep();
+            }
+        }
+    }
+    ROS_INFO("tf is good for table w/rt camera");
+    xformUtils.printStampedTf(block_frame_wrt_torso_stf);
+
+    object_poseStamped.header.frame_id = block_frame_wrt_torso_stf.frame_id_; //set object pose; ref frame must be connected via tf
+    object_poseStamped.pose.position.x = block_frame_wrt_torso_stf.getOrigin().x();//0.634;//0.527;
+    object_poseStamped.pose.position.y = block_frame_wrt_torso_stf.getOrigin().y();//-0.002;//-0.439;
+    object_poseStamped.pose.position.z = block_frame_wrt_torso_stf.getOrigin().z(); //-0.179;//-0.14; //
+    object_poseStamped.pose.orientation.x = block_frame_wrt_torso_stf.getRotation().x();//0.0; //block x-axis parallel to torso y axis
+    object_poseStamped.pose.orientation.y = block_frame_wrt_torso_stf.getRotation().y();//0.305;//0.0;
+    object_poseStamped.pose.orientation.z = block_frame_wrt_torso_stf.getRotation().z();//0.010;//0.707;
+    object_poseStamped.pose.orientation.w = block_frame_wrt_torso_stf.getRotation().w();//0.009;//0.707;
+    object_poseStamped.header.stamp = ros::Time::now();
+
+    ROS_INFO("Received block's location and orientaion");
+
+    cout << object_poseStamped << endl;
+}
+
 int main(int argc, char** argv) {
-    ros::init(argc, argv, "example_object_grabber_action_client");
+    ros::init(argc, argv, "example_object_grabber_action_client_1");
     ros::NodeHandle nh;
     double dt_wait = 0.5; //check status this often
     double wait_time;
@@ -80,11 +126,16 @@ int main(int argc, char** argv) {
     geometry_msgs::PoseStamped object_dropoff_poseStamped;
     //specify object pick-up and drop-off frames using simple test fnc
     //more generally, pick-up comes from perception and drop-off comes from task
-    set_example_object_frames(object_pickup_poseStamped, object_dropoff_poseStamped);
+    
+    //! set_example_object_frames(object_pickup_poseStamped, object_dropoff_poseStamped);
+
+    get_block_frame_wrt_torso(object_pickup_poseStamped);
+    object_dropoff_poseStamped = object_pickup_poseStamped;
 
     actionlib::SimpleActionClient<object_grabber::object_grabberAction> object_grabber_ac("object_grabber_action_service", true);
 
     ROS_INFO("waiting for server: ");
+    cout << "connecting to object_grabber action server" << endl;
     bool server_exists = false;
     while ((!server_exists)&&(ros::ok())) {
         server_exists = object_grabber_ac.waitForServer(ros::Duration(0.5)); // 
@@ -114,8 +165,6 @@ int main(int argc, char** argv) {
         ROS_WARN("giving up waiting on result ");
         return 1;
     }
-
-
 
     ROS_INFO("sending a grab-object command");
     object_grabber_goal.action_code = object_grabber::object_grabberGoal::GRAB_OBJECT; //specify the action to be performed 

@@ -43,9 +43,9 @@ int main(int argc, char **argv)
   sensor_msgs::PointCloud2 ros_cloud;     //here is the ROS-compatible message
   pcl::toROSMsg(*pcl_clr_ptr, ros_cloud); //convert from PCL to ROS type this way
   //ros_cloud.header.frame_id = "camera_depth_optical_frame";
-  ros_cloud.header.frame_id = "camera_depth_optical_frame";
+  ros_cloud.header.frame_id = "camera_rgb_optical_frame";
   
-  cout << "view in rviz; choose: topic= pcd; and fixed frame= camera_depth_optical_frame" << endl;
+  cout << "view in rviz; choose: topic= pcd; and fixed frame= camera_rgb_optical_frame" << endl;
   //publish the ROS-type message on topic "/ellipse"; can view this in rviz
   while (ros::ok())
   {
