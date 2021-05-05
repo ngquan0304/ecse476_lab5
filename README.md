@@ -1,3 +1,21 @@
+## Full code run
+
+---
+only for sim:
+    
+    roslaunch detect_object real_robot_sim.launch 
+
+run: (make sure to load map before doing this)
+
+    roslaunch detect_object launch_detect_object_nodes_sim_robot.launch 
+
+    roslaunch locomotion_action_server launch_locomotion_nodes.launch 
+
+    roslaunch object_grabber baxter_object_grabber_nodes.launch
+
+    rosrun jinx_merry_commander **top_commander**
+
+---
 ## To run top_commander:
 - Must source to learning_ros before catkin_make
 - Run locomotion launch file:
@@ -69,18 +87,6 @@ then tab to fill in the rest
 
 ## Object Grabber Client
 
-
 ---
-only for sim:
-    
-    roslaunch detect_object real_robot_sim.launch 
 
-run: (make sure to load map before doing this)
 
-    roslaunch detect_object launch_detect_object_nodes_sim_robot.launch 
-
-    roslaunch locomotion_action_server launch_locomotion_nodes.launch 
-
-    roslaunch object_grabber baxter_object_grabber_nodes.launch
-
-    
