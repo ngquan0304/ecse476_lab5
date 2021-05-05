@@ -5,15 +5,31 @@ only for sim:
     
     roslaunch detect_object real_robot_sim.launch 
 
-run: (make sure to load map before doing this)
+run: 
+    
+    rviz
 
-    roslaunch detect_object launch_detect_object_nodes_sim_robot.launch 
+    rosrun map_server map_server [map]
+
+    roslaunch detect_object launch_detect_object_nodes_real_robot.launch 
+
+    (roslaunch detect_object launch_detect_object_nodes_sim_robot.launch)
 
     roslaunch locomotion_action_server launch_locomotion_nodes.launch 
 
     roslaunch object_grabber baxter_object_grabber_nodes.launch
 
-    rosrun jinx_merry_commander **top_commander**
+    rosrun jinx_merry_commander top_commander
+
+debugging cmd:
+
+    rosservice call /capture_pcl_service
+
+    rosservice call /detect_pcl_service
+
+    rosrun baxter_playfile_nodes baxter_playback_pre_pose_right.jsp
+
+    rosrun pcl_utils display_pcd_file
 
 ---
 ## To run top_commander:
