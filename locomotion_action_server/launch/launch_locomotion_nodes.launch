@@ -1,5 +1,5 @@
 <launch>
-    <node name="amcl" pkg="amcl" type="amcl"/>
+    <!-- <node name="amcl" pkg="amcl" type="amcl"/> -->
     <node name="cur_state_pub" pkg="locomotion_action_server" type="current_state_publisher"/>
     <node name="des_state_pub_srv" pkg="locomotion_action_server" type="des_state_publisher_service" />
     <node name="lin_steering_wrt_amcl_and_odom" pkg="locomotion_action_server" type="lin_steering_wrt_amcl_and_odom" />

@@ -41,7 +41,7 @@ geometry_msgs::PoseStamped object_dropoff_poseStamped;
 
 int g_object_grabber_return_code;
 
-const double LOCO_TIME_OUT = 1.0;  //1.0;
+const double LOCO_TIME_OUT = 30.0;  //1.0;
 const double MANI_TIME_OUT = 30.0;
 const int STOP = 0;
 const int MOTION = 1;
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
     //! -----------------------------------------------------------------------
 
 
-    float x_t1 = 3.903 - 0.2;
+    float x_t1 = 3.903 - 0.3;
     float y_t1 = 0.412;
 
     float x_t2 = 0.542; //0.572
@@ -345,6 +345,11 @@ int main(int argc, char **argv)
     ROS_INFO("STEP 2: Docking table1");
     move(x_t1, y_t1);
 
+    ROS_INFO("STOP AT TABLE 2");
+    stop();
+
+    ros::Duration(5.0).sleep();
+    ros::spinOnce();
     // locate the block on the table n publish as tf_transform    
     find_block(emptysrv,srv);
     // get the block frame wrt torso from tf tree
@@ -366,7 +371,7 @@ int main(int argc, char **argv)
     backup();
 
     ROS_INFO("Step 4: Pre-table2");
-    move(x_t2, y_t2/2);
+    move(x_t2 + 0.2, y_t2/2);
 
     ROS_INFO("Step 5: Docking table2");
     move(x_t2, y_t2);

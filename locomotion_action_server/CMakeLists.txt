@@ -33,7 +33,7 @@ cs_add_executable(lidar_alarm_mobot src/lidar_alarm_mobot.cpp)
 cs_add_executable(current_state_publisher src/current_state_publisher.cpp)
 #cs_add_executable(modal_trajectory_controller src/modal_trajectory_controller.cpp)
 cs_add_executable(des_state_publisher_service src/des_state_publisher_service.cpp)
-# cs_add_executable(navigation_coordinator src/navigation_coordinator.cpp)
+cs_add_executable(navigation_coordinator src/navigation_coordinator.cpp)
 #cs_add_executable(lin_steering_wrt_odom src/lin_steering_wrt_odom.cpp)
 cs_add_executable(lin_steering_wrt_amcl_and_odom src/lin_steering_wrt_amcl_and_odom.cpp)
 cs_add_executable(locomotion_action_server src/locomotion_action_server.cpp)
@@ -42,7 +42,7 @@ cs_add_executable(locomotion_action_server src/locomotion_action_server.cpp)
 #the following is required, if desire to link a node in this package with a library created in this same package
 # edit the arguments to reference the named node and named library within this package
 target_link_libraries(des_state_publisher_service traj_builder)
-# target_link_libraries(navigation_coordinator traj_builder)
+target_link_libraries(navigation_coordinator traj_builder)
 target_link_libraries(locomotion_action_server traj_builder)
 
 cs_install()
